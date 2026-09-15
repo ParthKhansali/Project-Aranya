@@ -1,0 +1,70 @@
+{
+  "species": [
+    {
+      "id": "leopard",
+      "commonName": "Indian Leopard",
+      "scientificName": "Panthera pardus fusca",
+      "category": "Apex Carnivore",
+      "conservationStatus": "Vulnerable (IUCN)",
+      "primaryConflictType": "Livestock Depredation / Human Encounter",
+      "peakActivityHours": "18:00 - 05:00",
+      "habitatPreference": "Forest fringe, dense scrub, riverine corridors",
+      "icon": "🐆"
+    },
+    {
+      "id": "elephant",
+      "commonName": "Asian Elephant",
+      "scientificName": "Elephas maximus",
+      "category": "Megafauna Herbivore",
+      "conservationStatus": "Endangered (IUCN)",
+      "primaryConflictType": "Crop Raiding / Infrastructure Crossing",
+      "peakActivityHours": "17:00 - 07:00",
+      "habitatPreference": "Sal forest, riverine grasslands, migratory corridors",
+      "icon": "🐘"
+    },
+    {
+      "id": "tiger",
+      "commonName": "Bengal Tiger",
+      "scientificName": "Panthera tigris tigris",
+      "category": "Apex Carnivore",
+      "conservationStatus": "Endangered (IUCN)",
+      "primaryConflictType": "Territorial Fringe / Livestock Encounter",
+      "peakActivityHours": "19:00 - 04:00",
+      "habitatPreference": "Core protected reserve, deep forest canopy, waterholes",
+      "icon": "🐅"
+    },
+    {
+      "id": "bear",
+      "commonName": "Asiatic Black Bear",
+      "scientificName": "Ursus thibetanus",
+      "category": "Large Omnivore",
+      "conservationStatus": "Vulnerable (IUCN)",
+      "primaryConflictType": "Orchard Foraging / Human Encounter",
+      "peakActivityHours": "20:00 - 05:00",
+      "habitatPreference": "Oak-rhododendron forest, foothills buffer",
+      "icon": "🐻"
+    },
+    {
+      "id": "wild_boar",
+      "commonName": "Indian Wild Boar",
+      "scientificName": "Sus scrofa cristatus",
+      "category": "Herbivore / Omnivore",
+      "conservationStatus": "Least Concern (IUCN)",
+      "primaryConflictType": "Agricultural Crop Damage",
+      "peakActivityHours": "20:00 - 06:00",
+      "habitatPreference": "Forest boundary, agricultural edges, wetlands",
+      "icon": "🐗"
+    },
+    {
+      "id": "deer",
+      "commonName": "Spotted Deer (Chital)",
+      "scientificName": "Axis axis",
+      "category": "Prey Species",
+      "conservationStatus": "Least Concern (IUCN)",
+      "primaryConflictType": "Crop Foraging / Attracts Carnivores to Fringe",
+      "peakActivityHours": "06:00 - 10:00, 16:00 - 19:00",
+      "habitatPreference": "Open grasslands, dry deciduous forest edge",
+      "icon": "🦌"
+    }
+  ]
+}

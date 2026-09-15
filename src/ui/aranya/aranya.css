@@ -1,0 +1,675 @@
+/* ==========================================================================
+   ARANYA — Wildlife & Human-Conflict Intelligence Platform
+   Core Design System & Theme
+   ========================================================================== */
+
+:root {
+  --aranya-bg-base: rgba(11, 19, 15, 0.92);
+  --aranya-bg-panel: rgba(14, 25, 20, 0.88);
+  --aranya-bg-card: rgba(19, 36, 28, 0.75);
+  --aranya-bg-card-hover: rgba(28, 52, 41, 0.9);
+  --aranya-border: rgba(52, 211, 153, 0.22);
+  --aranya-border-bright: rgba(52, 211, 153, 0.6);
+  --aranya-emerald: #10b981;
+  --aranya-emerald-glow: rgba(16, 185, 129, 0.35);
+  --aranya-amber: #f59e0b;
+  --aranya-orange: #f97316;
+  --aranya-red: #ef4444;
+  --aranya-red-glow: rgba(239, 68, 68, 0.4);
+  --aranya-cyan: #06b6d4;
+  --aranya-text-main: #f0fdf4;
+  --aranya-text-muted: #9ca3af;
+  --aranya-font-mono: 'JetBrains Mono', monospace;
+  --aranya-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --aranya-font-heading: 'Space Grotesk', 'Inter', sans-serif;
+}
+
+/* Glassmorphism utility */
+.aranya-glass {
+  background: var(--aranya-bg-panel);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--aranya-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* -------------------------------------------------------------
+   TOP ARANYA INTELLIGENCE HUD
+   ------------------------------------------------------------- */
+#aranya-top-hud {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  right: 18px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-radius: 12px;
+  z-index: 1200;
+  pointer-events: auto;
+  font-family: var(--aranya-font-sans);
+}
+
+.aranya-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.aranya-logo-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.4));
+  border: 1.5px solid var(--aranya-border-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 0 16px var(--aranya-emerald-glow);
+}
+
+.aranya-title-wrap h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--aranya-text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--aranya-font-heading);
+}
+
+.aranya-tag-accent {
+  color: #34d399;
+  text-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
+}
+
+.aranya-subtitle {
+  margin: 2px 0 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  color: #a7f3d0;
+  opacity: 0.85;
+}
+
+/* Landscape presets */
+.aranya-presets-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(8, 15, 12, 0.7);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(52, 211, 153, 0.15);
+}
+
+.aranya-preset-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--aranya-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.aranya-preset-btn:hover {
+  background: rgba(52, 211, 153, 0.12);
+  color: var(--aranya-text-main);
+  border-color: var(--aranya-border);
+}
+
+.aranya-preset-btn.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.5));
+  border-color: var(--aranya-emerald);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+/* Live Intel Counters */
+.aranya-stats-pill-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.aranya-stat-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(9, 18, 14, 0.65);
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(52, 211, 153, 0.12);
+}
+
+.aranya-stat-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--aranya-text-muted);
+  text-transform: uppercase;
+}
+
+.aranya-stat-val {
+  font-size: 13px;
+  font-weight: 800;
+  font-family: var(--aranya-font-mono);
+  color: var(--aranya-text-main);
+}
+
+.aranya-stat-val.critical {
+  color: #ef4444;
+  animation: aranya-pulse 2s infinite;
+}
+
+.aranya-stat-val.warning {
+  color: #f59e0b;
+}
+
+@keyframes aranya-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+/* Actions in top bar */
+.aranya-hud-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aranya-sim-btn {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #000000;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.4);
+  transition: all 0.2s ease;
+}
+
+.aranya-sim-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.65);
+}
+
+/* -------------------------------------------------------------
+   LEFT OPERATIONS NAVIGATION SIDEBAR
+   ------------------------------------------------------------- */
+#aranya-left-nav {
+  position: absolute;
+  top: 92px;
+  left: 18px;
+  width: 320px;
+  bottom: 24px;
+  border-radius: 14px;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--aranya-font-sans);
+}
+
+.aranya-nav-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--aranya-border);
+}
+
+.aranya-nav-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #34d399;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.aranya-tabs-bar {
+  display: flex;
+  overflow-x: auto;
+  gap: 4px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(52, 211, 153, 0.12);
+  background: rgba(8, 16, 12, 0.5);
+}
+
+.aranya-tab-item {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--aranya-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.aranya-tab-item:hover {
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--aranya-text-main);
+}
+
+.aranya-tab-item.active {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: var(--aranya-emerald);
+  color: #ffffff;
+}
+
+.aranya-nav-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Nav Item Cards */
+.aranya-list-card {
+  background: var(--aranya-bg-card);
+  border: 1px solid var(--aranya-border);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.aranya-list-card:hover {
+  background: var(--aranya-bg-card-hover);
+  border-color: var(--aranya-border-bright);
+  transform: translateX(3px);
+}
+
+.aranya-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.aranya-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--aranya-text-main);
+}
+
+.aranya-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-family: var(--aranya-font-mono);
+}
+
+.aranya-badge-red {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.aranya-badge-amber {
+  background: rgba(245, 158, 11, 0.25);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.aranya-badge-green {
+  background: rgba(16, 185, 129, 0.25);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.aranya-badge-blue {
+  background: rgba(6, 182, 212, 0.25);
+  color: #06b6d4;
+  border: 1px solid rgba(6, 182, 212, 0.4);
+}
+
+.aranya-card-sub {
+  font-size: 11px;
+  color: var(--aranya-text-muted);
+  line-height: 1.4;
+}
+
+/* -------------------------------------------------------------
+   RIGHT CONTEXT INTELLIGENCE RAIL
+   ------------------------------------------------------------- */
+#aranya-right-rail {
+  position: absolute;
+  top: 92px;
+  right: 18px;
+  width: 400px;
+  max-height: calc(100vh - 120px);
+  border-radius: 14px;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--aranya-font-sans);
+  pointer-events: auto;
+}
+
+.aranya-rail-header {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--aranya-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.aranya-rail-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #34d399;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aranya-rail-close {
+  background: transparent;
+  border: none;
+  color: var(--aranya-text-muted);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.aranya-rail-close:hover {
+  color: #ffffff;
+}
+
+.aranya-rail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Explainable Risk Breakdown Card */
+.aranya-risk-engine-card {
+  background: rgba(14, 28, 22, 0.85);
+  border: 1px solid var(--aranya-border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.aranya-risk-score-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.aranya-big-score {
+  font-size: 38px;
+  font-weight: 900;
+  font-family: var(--aranya-font-mono);
+  line-height: 1;
+}
+
+.aranya-factor-row {
+  margin-bottom: 10px;
+}
+
+.aranya-factor-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.aranya-factor-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.aranya-factor-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.aranya-factor-desc {
+  font-size: 10px;
+  color: var(--aranya-text-muted);
+  margin-top: 3px;
+}
+
+/* Field Verification Box */
+.aranya-verify-box {
+  background: rgba(14, 28, 22, 0.85);
+  border: 1px solid var(--aranya-border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.aranya-verify-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.aranya-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--aranya-emerald);
+  color: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.aranya-verify-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.aranya-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.aranya-btn-primary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.aranya-btn-primary:hover {
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.65);
+}
+
+.aranya-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--aranya-text-main);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* -------------------------------------------------------------
+   MODALS (WELCOME & SIMULATOR)
+   ------------------------------------------------------------- */
+.aranya-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 5, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.aranya-modal-card {
+  width: 600px;
+  max-width: 95vw;
+  border-radius: 16px;
+  background: var(--aranya-bg-base);
+  border: 1px solid var(--aranya-border-bright);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  padding: 28px;
+  position: relative;
+  font-family: var(--aranya-font-sans);
+}
+
+.aranya-modal-kicker {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #34d399;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.aranya-modal-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--aranya-text-main);
+  margin: 0 0 10px;
+  font-family: var(--aranya-font-heading);
+}
+
+.aranya-modal-p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--aranya-text-muted);
+  margin: 0 0 24px;
+}
+
+.aranya-entry-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.aranya-entry-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: rgba(18, 36, 28, 0.8);
+  border: 1px solid var(--aranya-border);
+  color: var(--aranya-text-main);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.25s ease;
+}
+
+.aranya-entry-btn:hover {
+  background: rgba(28, 56, 43, 0.95);
+  border-color: var(--aranya-emerald);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
+}
+
+.aranya-entry-btn.primary {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(5, 150, 105, 0.55));
+  border-color: #34d399;
+}
+
+.aranya-entry-icon {
+  font-size: 28px;
+}
+
+.aranya-entry-text strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.aranya-entry-text small {
+  font-size: 11px;
+  color: var(--aranya-text-muted);
+}
+
+/* Scenario list in simulator modal */
+.aranya-scenario-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.aranya-scenario-card {
+  background: rgba(16, 32, 25, 0.85);
+  border: 1px solid var(--aranya-border);
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.aranya-scenario-card:hover {
+  background: rgba(25, 50, 39, 0.95);
+  border-color: var(--aranya-emerald);
+}
+
+.aranya-scenario-card h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #34d399;
+}
+
+.aranya-scenario-card p {
+  font-size: 11px;
+  color: var(--aranya-text-muted);
+  line-height: 1.4;
+  margin: 0 0 12px;
+}

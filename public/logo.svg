@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="logo-title">
+  <title id="logo-title">ARANYA — Wildlife &amp; Human-Conflict Intelligence Platform</title>
+  <defs>
+    <radialGradient id="aranyaGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/>
+      <stop offset="70%" stop-color="#059669" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#022c22" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="50%" stop-color="#022c22"/>
+      <stop offset="100%" stop-color="#031610"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <filter id="bloom" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Ambient background glow -->
+  <circle cx="256" cy="256" r="248" fill="url(#aranyaGlow)"/>
+
+  <!-- Main Base Shield / Token -->
+  <circle cx="256" cy="256" r="224" fill="url(#shieldGrad)" stroke="url(#emeraldGrad)" stroke-width="8"/>
+  <circle cx="256" cy="256" r="206" fill="none" stroke="#34d399" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="8 6"/>
+
+  <!-- Outer Telemetry Radar Ring -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="url(#goldGrad)" stroke-width="3" stroke-opacity="0.4" stroke-dasharray="24 16 8 16"/>
+
+  <!-- Compass / Radar ticks -->
+  <path d="M 256 36 L 256 56 M 256 456 L 256 476 M 36 256 L 56 256 M 456 256 L 476 256" stroke="#34d399" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Forest Canopy & Wildlife Haven Centerpiece -->
+  <!-- Stylized Majestic Tree of Life with Tiger Stripe Leaf Structure -->
+  <g filter="url(#bloom)">
+    <!-- Tree Trunk / Upward Ingress Gateway -->
+    <path d="M 238 380 L 256 320 L 274 380 Q 256 372 238 380 Z" fill="url(#goldGrad)"/>
+    <path d="M 256 320 L 256 210" stroke="url(#goldGrad)" stroke-width="8" stroke-linecap="round"/>
+
+    <!-- Left Canopy Boughs -->
+    <path d="M 256 260 Q 200 240 170 190 Q 210 180 256 215" fill="url(#emeraldGrad)" opacity="0.95"/>
+    <path d="M 256 215 Q 185 180 160 120 Q 215 130 256 175" fill="url(#emeraldGrad)" opacity="0.85"/>
+
+    <!-- Right Canopy Boughs -->
+    <path d="M 256 260 Q 312 240 342 190 Q 302 180 256 215" fill="url(#emeraldGrad)" opacity="0.95"/>
+    <path d="M 256 215 Q 327 180 352 120 Q 297 130 256 175" fill="url(#emeraldGrad)" opacity="0.85"/>
+
+    <!-- Top Apex Spire Leaf / Flame of Life -->
+    <path d="M 256 100 Q 230 145 256 185 Q 282 145 256 100 Z" fill="url(#goldGrad)"/>
+
+    <!-- Wildlife Paw / Telemetry Core Nodes -->
+    <circle cx="216" cy="310" r="14" fill="#34d399" opacity="0.9"/>
+    <circle cx="296" cy="310" r="14" fill="#34d399" opacity="0.9"/>
+    <circle cx="190" cy="270" r="12" fill="#fbbf24" opacity="0.9"/>
+    <circle cx="322" cy="270" r="12" fill="#fbbf24" opacity="0.9"/>
+    <circle cx="256" cy="285" r="18" fill="url(#goldGrad)"/>
+  </g>
+
+  <!-- Ground Coordinate Arc -->
+  <path d="M 140 400 Q 256 440 372 400" fill="none" stroke="url(#emeraldGrad)" stroke-width="4" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,145 @@
+[
+  {
+    "id": "scenario-leopard-early-warning",
+    "title": "Scenario 1: Leopard Early Warning (Raiwala)",
+    "subtitle": "Crepuscular carnivore approach toward domestic cattle sheds",
+    "landscape": "Rajaji South / Raiwala Fringe",
+    "targetLat": 30.0125,
+    "targetLon": 78.2380,
+    "cameraHeight": 4500,
+    "cameraPitch": -42,
+    "species": "Panthera pardus (Indian Leopard)",
+    "description": "Simulates a sequence of automated camera trap triggers (CAM-017, CAM-018) along a seasonal drainage ravine leading straight into Raiwala Ward 4. Watch risk cell RISK-008 spike to 87, generate a critical alert, trace the ingress trail, and allow field verification dispatch to Team Alpha.",
+    "steps": [
+      {
+        "delayMs": 500,
+        "action": "TRIGGER_CAMERA_TRAP",
+        "trapId": "CAM-017",
+        "confidence": 0.96,
+        "message": "CAM-017 triggered: Adult male leopard detected moving downhill in scrub gully."
+      },
+      {
+        "delayMs": 2000,
+        "action": "TRIGGER_CAMERA_TRAP",
+        "trapId": "CAM-018",
+        "confidence": 0.92,
+        "message": "CAM-018 triggered: Sighting 140m closer to village perimeter fence."
+      },
+      {
+        "delayMs": 3500,
+        "action": "UPDATE_RISK_CELL",
+        "cellId": "RISK-008",
+        "score": 87,
+        "message": "Risk Engine updated: Raiwala Sector 4 escalated to CRITICAL (87/100)."
+      },
+      {
+        "delayMs": 5000,
+        "action": "GENERATE_ALERT",
+        "alertId": "ALT-2026-042",
+        "message": "Priority Alert Generated: Solitary Leopard Approaching Cattle Pens."
+      }
+    ]
+  },
+  {
+    "id": "scenario-elephant-corridor",
+    "title": "Scenario 2: Corridor Pinch-Point (Chilla-Motichur)",
+    "subtitle": "Breeding herd attempting high-risk railway crossing",
+    "landscape": "Rajaji Chilla-Motichur Corridor #07",
+    "targetLat": 30.0710,
+    "targetLon": 78.1920,
+    "cameraHeight": 6500,
+    "cameraPitch": -50,
+    "species": "Elephas maximus (Asian Elephant)",
+    "description": "Examines corridor fragmentation where an elephant family of 5 approaches the Haridwar-Dehradun railway embankment. Triggers corridor health analytics and rail speed deceleration protocols.",
+    "steps": [
+      {
+        "delayMs": 800,
+        "action": "TRIGGER_CAMERA_TRAP",
+        "trapId": "CAM-022",
+        "confidence": 0.98,
+        "message": "CAM-022 triggered: Herd of 5 elephants including juvenile detected near railway culvert."
+      },
+      {
+        "delayMs": 2500,
+        "action": "UPDATE_RISK_CELL",
+        "cellId": "RISK-004",
+        "score": 82,
+        "message": "Corridor bottleneck collision risk elevated to HIGH (82/100)."
+      },
+      {
+        "delayMs": 4000,
+        "action": "GENERATE_ALERT",
+        "alertId": "ALT-2026-040",
+        "message": "Railway Warning Broadcast: Northern Railway Control requested to restrict section speed to 20 km/h."
+      }
+    ]
+  },
+  {
+    "id": "scenario-habitat-pressure",
+    "title": "Scenario 3: Habitat Pressure & Resort Fringe (Ramnagar)",
+    "subtitle": "Apex predator navigation through encroached riparian buffer",
+    "landscape": "Corbett Southern Buffer / Kosi River",
+    "targetLat": 29.4120,
+    "targetLon": 79.1120,
+    "cameraHeight": 5500,
+    "cameraPitch": -45,
+    "species": "Panthera tigris (Bengal Tiger)",
+    "description": "Visualizes the impact of tourist resort expansion along the Kosi riverbed. Triggers tiger movement detection near Dhikuli resorts and prompts evening eco-curfew measures.",
+    "steps": [
+      {
+        "delayMs": 800,
+        "action": "TRIGGER_CAMERA_TRAP",
+        "trapId": "CAM-025",
+        "confidence": 0.94,
+        "message": "CAM-025 triggered: Adult male tiger sighted crossing dry river channel towards resort boundary."
+      },
+      {
+        "delayMs": 2500,
+        "action": "UPDATE_RISK_CELL",
+        "cellId": "RISK-015",
+        "score": 84,
+        "message": "Ramnagar River Corridor risk elevated to CRITICAL (84/100) due to tourist proximity."
+      },
+      {
+        "delayMs": 4000,
+        "action": "GENERATE_ALERT",
+        "alertId": "ALT-2026-038",
+        "message": "Resort Security Advisory: Immediate perimeter pedestrian curfew issued."
+      }
+    ]
+  },
+  {
+    "id": "scenario-unauthorized-activity",
+    "title": "Scenario 4: Perimeter Disturbance & Snare Threat",
+    "subtitle": "Nocturnal human incursion in Shyampur Reserved Forest",
+    "landscape": "Haridwar-Shyampur Forest Fringe",
+    "targetLat": 29.9450,
+    "targetLon": 78.1920,
+    "cameraHeight": 4000,
+    "cameraPitch": -40,
+    "species": "Sus scrofa & Panthera pardus Interface",
+    "description": "Simulates off-trail nocturnal activity along the reserved forest ditch where wire snares are historically placed. Dispatches anti-poaching patrol unit for ground comb.",
+    "steps": [
+      {
+        "delayMs": 800,
+        "action": "TRIGGER_CAMERA_TRAP",
+        "trapId": "CAM-009",
+        "confidence": 0.89,
+        "message": "CAM-009 triggered: Thermal sensor flags unauthorized flashlight presence inside forest boundary."
+      },
+      {
+        "delayMs": 2500,
+        "action": "UPDATE_RISK_CELL",
+        "cellId": "RISK-012",
+        "score": 79,
+        "message": "Shyampur buffer vulnerability raised to HIGH (79/100)."
+      },
+      {
+        "delayMs": 4000,
+        "action": "GENERATE_ALERT",
+        "alertId": "ALT-2026-035",
+        "message": "Anti-Poaching Dispatch: Foot patrol team assigned for immediate snare sweep."
+      }
+    ]
+  }
+]
