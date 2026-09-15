@@ -62,7 +62,11 @@
   width: 42px;
   height: 42px;
   border-radius: 10px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.4));
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.25),
+    rgba(5, 150, 105, 0.4)
+  );
   border: 1.5px solid var(--aranya-border-bright);
   display: flex;
   align-items: center;
@@ -130,7 +134,11 @@
 }
 
 .aranya-preset-btn.active {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.5));
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.3),
+    rgba(5, 150, 105, 0.5)
+  );
   border-color: var(--aranya-emerald);
   color: #ffffff;
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
@@ -178,8 +186,13 @@
 }
 
 @keyframes aranya-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.65; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.65;
+  }
 }
 
 /* Actions in top bar */
@@ -616,7 +629,11 @@
 }
 
 .aranya-entry-btn.primary {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(5, 150, 105, 0.55));
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.35),
+    rgba(5, 150, 105, 0.55)
+  );
   border-color: #34d399;
 }
 
@@ -675,9 +692,10 @@
 }
 
 /* -------------------------------------------------------------
-   SUPPRESS CESIUM CREDITS, ION LOGO, AND DATA ATTRIBUTION LIGHTBOX
+   SUPPRESS CESIUM CREDITS, ION LOGO, COMMAND DOCK & OBSOLETE HUD
    ------------------------------------------------------------- */
 #cesium-credits,
+#command-dock,
 .cesium-widget-credits,
 .cesium-credit-logoContainer,
 .cesium-credit-textContainer,
@@ -695,3 +713,13 @@
   left: -9999px !important;
 }
 
+@keyframes aranyaFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

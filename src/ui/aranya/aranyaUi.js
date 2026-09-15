@@ -1,16 +1,20 @@
 // ARANYA — Wildlife & Human-Conflict Intelligence Platform
-// Master UI Controller & Interaction Engine
+// Master UI Controller, Interaction Engine & Decision Support System (DSS)
 import * as Cesium from 'cesium';
 import { defaultWildlifeProvider } from '../../data/aranya/wildlifeProvider.js';
 import { defaultMovementProvider } from '../../data/aranya/movementProvider.js';
 import { defaultConflictProvider } from '../../data/aranya/conflictProvider.js';
-import { defaultRiskProvider, getRiskCategory } from '../../data/aranya/riskProvider.js';
+import {
+  defaultRiskProvider,
+  getRiskCategory,
+} from '../../data/aranya/riskProvider.js';
 import { defaultHabitatProvider } from '../../data/aranya/habitatProvider.js';
 import { defaultHumanInterfaceProvider } from '../../data/aranya/humanInterfaceProvider.js';
 import { defaultFieldTeamProvider } from '../../data/aranya/fieldTeamProvider.js';
 import { defaultAlertProvider } from '../../data/aranya/alertProvider.js';
 import scenariosData from '../../data/aranya/scenarios.json';
 import { CAMERA_PRESETS, flyToPreset } from '../../camera.js';
+import { AranyaMapVisualizer } from './aranyaMapVisualizer.js';
 import './aranya.css';
 
 export class AranyaUi {
@@ -20,16 +24,23 @@ export class AranyaUi {
     this.styleManager = styleManager;
     this.activeTab = 'wildlife';
     this.selectedItem = null;
-    this.selectedType = null; // 'risk', 'trap', 'observation', 'alert', 'settlement', 'team'
+    this.selectedType = null;
     this.unsubscribers = [];
+    this.mapVisualizer = new AranyaMapVisualizer(viewer);
   }
 
-  mount() {
-    // Hide legacy intel HUD, scope mask canvas, and Cesium credit / Ion logo
+  async mount() {
+    // 1. Hide legacy military HUD, bottom command dock, scope mask, and Cesium credit / Ion logo
     const intelHud = document.getElementById('intel-hud');
     if (intelHud) {
       intelHud.style.display = 'none';
       intelHud.innerHTML = '';
+    }
+    const commandDock = document.getElementById('command-dock');
+    if (commandDock) {
+      commandDock.style.display = 'none';
+      commandDock.setAttribute('hidden', '');
+      commandDock.setAttribute('aria-hidden', 'true');
     }
     document.getElementById('scope-mask')?.remove();
     const cesiumCredits = document.getElementById('cesium-credits');
@@ -39,19 +50,34 @@ export class AranyaUi {
       cesiumCredits.setAttribute('hidden', '');
       cesiumCredits.setAttribute('aria-hidden', 'true');
     }
-    document.querySelectorAll('.cesium-widget-credits, .cesium-credit-lightbox, .cesium-credit-lightbox-overlay').forEach((el) => {
-      el.style.display = 'none';
-    });
+    document
+      .querySelectorAll(
+        '.cesium-widget-credits, .cesium-credit-lightbox, .cesium-credit-lightbox-overlay',
+      )
+      .forEach((el) => {
+        el.style.display = 'none';
+      });
 
+    // 2. Build ARANYA DOM components
     this._buildTopHud();
     this._buildLeftNav();
     this._buildRightRail();
     this._buildModals();
+    this._buildToastContainer();
+
+    // 3. Initialize 3D Map Visualizer layers on the Cesium globe
+    await this._initMapLayers();
+
+    // 4. Setup entity picking so clicking items on the 3D globe opens their dossier
+    this.mapVisualizer.setupEntityPicking((type, data) =>
+      this.inspectItem(type, data),
+    );
+
     this._attachEntitySelectionListener();
     this._subscribeProviders();
     this._updateCounters();
 
-    // Check if user has dismissed welcome modal previously; otherwise display starting choices
+    // 5. Check if user has dismissed welcome modal previously; otherwise display starting choices
     const hasSeenWelcome = localStorage.getItem('aranya:welcomed');
     if (!hasSeenWelcome) {
       this.showWelcomeModal();
@@ -60,13 +86,51 @@ export class AranyaUi {
 
   destroy() {
     for (const unsub of this.unsubscribers) {
-      try { unsub(); } catch (e) {}
+      try {
+        unsub();
+      } catch (e) {}
     }
+    this.mapVisualizer?.destroy();
     document.getElementById('aranya-top-hud')?.remove();
     document.getElementById('aranya-left-nav')?.remove();
     document.getElementById('aranya-right-rail')?.remove();
     document.getElementById('aranya-welcome-modal')?.remove();
     document.getElementById('aranya-simulator-modal')?.remove();
+    document.getElementById('aranya-toast-container')?.remove();
+  }
+
+  // -------------------------------------------------------------
+  // INITIALIZE 3D MAP LAYERS
+  // -------------------------------------------------------------
+  async _initMapLayers() {
+    try {
+      const [
+        cameraTraps,
+        observations,
+        riskCells,
+        settlements,
+        corridors,
+        fieldTeams,
+      ] = await Promise.all([
+        defaultWildlifeProvider.getCameraTraps(),
+        defaultWildlifeProvider.getObservations(),
+        defaultRiskProvider.getRiskCells(),
+        defaultHumanInterfaceProvider.getSettlements(),
+        defaultHabitatProvider.getCorridors(),
+        defaultFieldTeamProvider.getTeams(),
+      ]);
+
+      this.mapVisualizer.renderStaticLayers({
+        cameraTraps,
+        observations,
+        riskCells,
+        settlements,
+        corridors,
+        fieldTeams,
+      });
+    } catch (err) {
+      console.warn('[ARANYA] Could not initialize 3D map layers:', err);
+    }
   }
 
   // -------------------------------------------------------------
@@ -97,7 +161,7 @@ export class AranyaUi {
       <div class="aranya-stats-pill-group">
         <div class="aranya-stat-pill">
           <span class="aranya-stat-label">ACTIVE SIGHTINGS</span>
-          <span id="stat-sightings-val" class="aranya-stat-val text-green">14</span>
+          <span id="stat-sightings-val" class="aranya-stat-val text-green">7</span>
         </div>
         <div class="aranya-stat-pill">
           <span class="aranya-stat-label">MAX CONFLICT RISK</span>
@@ -105,7 +169,7 @@ export class AranyaUi {
         </div>
         <div class="aranya-stat-pill">
           <span class="aranya-stat-label">PRIORITY ALERTS</span>
-          <span id="stat-alerts-val" class="aranya-stat-val warning">3 ACTIVE</span>
+          <span id="stat-alerts-val" class="aranya-stat-val warning">1 ACTIVE</span>
         </div>
       </div>
 
@@ -122,9 +186,11 @@ export class AranyaUi {
     document.body.appendChild(hud);
 
     // Preset button click handlers
-    hud.querySelectorAll('.aranya-preset-btn').forEach(btn => {
+    hud.querySelectorAll('.aranya-preset-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
-        hud.querySelectorAll('.aranya-preset-btn').forEach(b => b.classList.remove('active'));
+        hud
+          .querySelectorAll('.aranya-preset-btn')
+          .forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
         const preset = btn.dataset.preset;
         flyToPreset(this.viewer, preset);
@@ -132,8 +198,12 @@ export class AranyaUi {
     });
 
     // Action handlers
-    document.getElementById('btn-open-sim')?.addEventListener('click', () => this.showSimulatorModal());
-    document.getElementById('btn-open-welcome')?.addEventListener('click', () => this.showWelcomeModal());
+    document
+      .getElementById('btn-open-sim')
+      ?.addEventListener('click', () => this.showSimulatorModal());
+    document
+      .getElementById('btn-open-welcome')
+      ?.addEventListener('click', () => this.showWelcomeModal());
   }
 
   // -------------------------------------------------------------
@@ -161,9 +231,11 @@ export class AranyaUi {
     document.body.appendChild(nav);
 
     // Tab switching
-    nav.querySelectorAll('.aranya-tab-item').forEach(btn => {
+    nav.querySelectorAll('.aranya-tab-item').forEach((btn) => {
       btn.addEventListener('click', () => {
-        nav.querySelectorAll('.aranya-tab-item').forEach(b => b.classList.remove('active'));
+        nav
+          .querySelectorAll('.aranya-tab-item')
+          .forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
         this.activeTab = btn.dataset.tab;
         this.renderNavTab();
@@ -185,7 +257,7 @@ export class AranyaUi {
       const headingTraps = document.createElement('div');
       headingTraps.className = 'aranya-card-sub';
       headingTraps.style.fontWeight = 'bold';
-      headingTraps.textContent = `CAMERA TRAPS (${traps.length})`;
+      headingTraps.textContent = `CAMERA TRAP STATIONS (${traps.length})`;
       container.appendChild(headingTraps);
 
       for (const trap of traps) {
@@ -196,8 +268,8 @@ export class AranyaUi {
             <span class="aranya-card-title">📷 ${trap.id}</span>
             <span class="aranya-badge ${trap.status === 'triggered' ? 'aranya-badge-red' : 'aranya-badge-green'}">${trap.status.toUpperCase()}</span>
           </div>
-          <div class="aranya-card-sub">${trap.name}</div>
-          <div class="aranya-card-sub" style="margin-top:4px;color:#a7f3d0">Last: ${trap.lastTriggerSpecies || 'Routine stand-by'}</div>
+          <div class="aranya-card-sub" style="font-weight:600;color:#f0fdf4">${trap.name}</div>
+          <div class="aranya-card-sub" style="margin-top:4px;color:#a7f3d0">Last: ${trap.lastDetection?.species || trap.lastTriggerSpecies || 'Routine standby'} · Batt: ${trap.battery || 88}%</div>
         `;
         card.addEventListener('click', () => {
           this.flyToLocation(trap.lon, trap.lat, 3500);
@@ -209,23 +281,43 @@ export class AranyaUi {
       const headingObs = document.createElement('div');
       headingObs.className = 'aranya-card-sub';
       headingObs.style.fontWeight = 'bold';
-      headingObs.style.marginTop = '12px';
+      headingObs.style.marginTop = '14px';
       headingObs.textContent = `RECENT OBSERVATIONS (${obs.length})`;
       container.appendChild(headingObs);
 
       for (const item of obs) {
         const card = document.createElement('div');
         card.className = 'aranya-list-card';
+        const riskScore = item.conflictRiskIndex || 80;
+        const badgeClass =
+          riskScore >= 80
+            ? 'aranya-badge-red'
+            : riskScore >= 60
+              ? 'aranya-badge-amber'
+              : 'aranya-badge-green';
+        const icon =
+          item.icon ||
+          (item.species === 'Leopard'
+            ? '🐆'
+            : item.species === 'Asian Elephant'
+              ? '🐘'
+              : item.species === 'Bengal Tiger'
+                ? '🐅'
+                : item.species === 'Spotted Deer'
+                  ? '🦌'
+                  : '🐗');
+
         card.innerHTML = `
           <div class="aranya-card-top">
-            <span class="aranya-card-title">${item.icon || '🐾'} ${item.species}</span>
-            <span class="aranya-badge aranya-badge-amber">${item.detectionMethod}</span>
+            <span class="aranya-card-title">${icon} ${item.species}</span>
+            <span class="aranya-badge ${badgeClass}">${riskScore ? `RISK ${riskScore}` : 'STABLE'}</span>
           </div>
-          <div class="aranya-card-sub">${item.locationName}</div>
-          <div class="aranya-card-sub" style="margin-top:4px;color:#cbd5e1">${item.behaviorNotes}</div>
+          <div class="aranya-card-sub" style="font-weight:600;color:#f0fdf4">${item.cameraName || item.locationName || 'Uttarakhand Corridor'}</div>
+          <div class="aranya-card-sub" style="margin-top:4px;color:#cbd5e1">${item.status || item.recentMovement}</div>
+          <div class="aranya-card-sub" style="margin-top:2px;font-size:10px;color:var(--aranya-emerald)">${item.timestamp} · Conf: ${Math.round((item.confidence || 0.9) * 100)}%</div>
         `;
         card.addEventListener('click', () => {
-          this.flyToLocation(item.lon, item.lat, 4000);
+          this.flyToLocation(item.lon, item.lat, 3500);
           this.inspectItem('observation', item);
         });
         container.appendChild(card);
@@ -236,9 +328,14 @@ export class AranyaUi {
         const cat = getRiskCategory(cell.overallScore);
         const card = document.createElement('div');
         card.className = 'aranya-list-card';
-        const badgeClass = cell.overallScore >= 81 ? 'aranya-badge-red' :
-                           cell.overallScore >= 61 ? 'aranya-badge-amber' :
-                           cell.overallScore >= 31 ? 'aranya-badge-blue' : 'aranya-badge-green';
+        const badgeClass =
+          cell.overallScore >= 81
+            ? 'aranya-badge-red'
+            : cell.overallScore >= 61
+              ? 'aranya-badge-amber'
+              : cell.overallScore >= 31
+                ? 'aranya-badge-blue'
+                : 'aranya-badge-green';
         card.innerHTML = `
           <div class="aranya-card-top">
             <span class="aranya-card-title">⚠️ ${cell.id}</span>
@@ -258,15 +355,13 @@ export class AranyaUi {
       for (const alert of alerts) {
         const card = document.createElement('div');
         card.className = 'aranya-list-card';
-        const badgeClass = alert.severity === 'critical' ? 'aranya-badge-red' :
-                           alert.severity === 'high' ? 'aranya-badge-amber' : 'aranya-badge-blue';
         card.innerHTML = `
           <div class="aranya-card-top">
             <span class="aranya-card-title">🚨 ${alert.id}</span>
-            <span class="aranya-badge ${badgeClass}">${alert.status}</span>
+            <span class="aranya-badge ${alert.severity === 'CRITICAL' ? 'aranya-badge-red' : 'aranya-badge-amber'}">${alert.severity}</span>
           </div>
-          <div class="aranya-card-sub" style="font-weight:700;color:#f0fdf4">${alert.title}</div>
-          <div class="aranya-card-sub" style="margin-top:4px;">${alert.summary}</div>
+          <div class="aranya-card-sub" style="font-weight:600;color:#f0fdf4">${alert.title}</div>
+          <div class="aranya-card-sub" style="margin-top:4px;color:#cbd5e1">${alert.summary}</div>
         `;
         card.addEventListener('click', () => {
           this.flyToLocation(alert.lon, alert.lat, 4000);
@@ -288,8 +383,7 @@ export class AranyaUi {
           <div class="aranya-card-sub" style="margin-top:6px;color:#f59e0b">Pinch Points: ${corr.pinchPoints ? corr.pinchPoints.length : 0} critical bottlenecks</div>
         `;
         card.addEventListener('click', () => {
-          const mid = corr.coordinates[Math.floor(corr.coordinates.length / 2)];
-          this.flyToLocation(mid[0], mid[1], 8000);
+          this.flyToLocation(corr.centerLon, corr.centerLat, 8000);
           this.inspectItem('corridor', corr);
         });
         container.appendChild(card);
@@ -336,7 +430,7 @@ export class AranyaUi {
   }
 
   // -------------------------------------------------------------
-  // 3. RIGHT CONTEXT INTELLIGENCE RAIL
+  // 3. RIGHT CONTEXT INTELLIGENCE RAIL (EXECUTIVE DOSSIERS & XAI)
   // -------------------------------------------------------------
   _buildRightRail() {
     const rail = document.createElement('aside');
@@ -345,16 +439,18 @@ export class AranyaUi {
     rail.style.display = 'none';
     rail.innerHTML = `
       <div class="aranya-rail-header">
-        <h3 id="aranya-rail-title"><span>AREA INTELLIGENCE</span></h3>
+        <h3 id="aranya-rail-title"><span>INTELLIGENCE INSPECTOR</span></h3>
         <button id="aranya-rail-close-btn" class="aranya-rail-close" type="button" aria-label="Close panel">✕</button>
       </div>
       <div id="aranya-rail-content" class="aranya-rail-body"></div>
     `;
 
     document.body.appendChild(rail);
-    document.getElementById('aranya-rail-close-btn')?.addEventListener('click', () => {
-      rail.style.display = 'none';
-    });
+    document
+      .getElementById('aranya-rail-close-btn')
+      ?.addEventListener('click', () => {
+        rail.style.display = 'none';
+      });
   }
 
   inspectItem(type, data) {
@@ -369,7 +465,146 @@ export class AranyaUi {
     rail.style.display = 'flex';
     bodyEl.innerHTML = '';
 
-    if (type === 'risk') {
+    if (type === 'observation') {
+      titleEl.innerHTML = `<span>🐾 WILDLIFE INTELLIGENCE DOSSIER</span>`;
+      const xai = data.aiThoughtProcess;
+      const riskScore = data.conflictRiskIndex || 87;
+
+      // Draw spatial historical trail and AI forward predictive trajectory onto 3D Cesium globe
+      this.mapVisualizer.displayTrajectoryAndPrediction(data);
+
+      bodyEl.innerHTML = `
+        <div class="aranya-risk-engine-card">
+          <div class="aranya-card-top" style="margin-bottom:8px">
+            <div>
+              <div class="aranya-modal-kicker">TARGET CLASSIFICATION</div>
+              <strong style="font-size:18px;color:#f0fdf4">${data.icon || '🐾'} ${data.species}</strong>
+              <div style="font-size:12px;font-style:italic;color:var(--aranya-emerald)">${data.scientificName || 'Panthera pardus'}</div>
+            </div>
+            <div class="aranya-badge ${riskScore >= 80 ? 'aranya-badge-red' : riskScore >= 60 ? 'aranya-badge-amber' : 'aranya-badge-green'}" style="font-size:12px;padding:6px 10px">
+              RISK: ${riskScore}/100
+            </div>
+          </div>
+
+          <!-- Sensor Capture & Location Grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0">
+            <div class="aranya-stat-pill" style="flex-direction:column;align-items:flex-start;padding:8px">
+              <span class="aranya-stat-label">DETECTION SENSOR</span>
+              <strong style="font-size:12px;color:#f0fdf4">${data.source || 'CAM-017'} (${Math.round((data.confidence || 0.9) * 100)}%)</strong>
+            </div>
+            <div class="aranya-stat-pill" style="flex-direction:column;align-items:flex-start;padding:8px">
+              <span class="aranya-stat-label">TIME OF DETECTION</span>
+              <strong style="font-size:12px;color:#38bdf8">${data.timestamp}</strong>
+            </div>
+            <div class="aranya-stat-pill" style="flex-direction:column;align-items:flex-start;padding:8px">
+              <span class="aranya-stat-label">NEAREST INTERFACE</span>
+              <strong style="font-size:12px;color:#f59e0b">${data.nearbySettlement || 'Raiwala Fringe (1.4 km)'}</strong>
+            </div>
+            <div class="aranya-stat-pill" style="flex-direction:column;align-items:flex-start;padding:8px">
+              <span class="aranya-stat-label">OBSERVED BEHAVIOR</span>
+              <strong style="font-size:12px;color:#f0fdf4">${data.status || 'Crepuscular Ingress'}</strong>
+            </div>
+          </div>
+
+          <!-- AI Predictive Trajectory & Thought Process (Explainable AI / DSS) -->
+          ${
+            xai
+              ? `
+            <div style="margin-top:14px;padding:14px;background:rgba(8, 20, 16, 0.95);border-radius:10px;border:1px solid rgba(52, 211, 153, 0.4);box-shadow:0 4px 16px rgba(0,0,0,0.5)">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <span style="font-size:16px">🧠</span>
+                <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:#34d399;text-transform:uppercase">
+                  AI PREDICTIVE THOUGHT PROCESS & TRAJECTORY
+                </div>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:#f0fdf4;margin-bottom:6px">
+                ${xai.predictionSummary}
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:12px">
+                <span class="aranya-badge aranya-badge-blue" style="font-size:10px">${xai.confidenceScore}</span>
+                <span class="aranya-badge aranya-badge-red" style="font-size:10px">ETA: ${xai.estimatedTimeOfArrival}</span>
+              </div>
+
+              <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:6px;text-transform:uppercase">
+                WHY DID AI PREDICT THIS PATH? (EVIDENCE REASONING)
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                ${(xai.reasoningSteps || [])
+                  .map(
+                    (r) => `
+                  <div style="background:rgba(255,255,255,0.04);padding:8px 10px;border-radius:6px;border-left:3px solid #34d399">
+                    <strong style="font-size:11px;color:#34d399;display:block">${r.factor}</strong>
+                    <div style="font-size:11px;color:#cbd5e1;line-height:1.4">${r.detail}</div>
+                  </div>
+                `,
+                  )
+                  .join('')}
+              </div>
+            </div>
+          `
+              : ''
+          }
+
+          <!-- Actions & Decision Support Interventions -->
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+            <button id="btn-dispatch-team-from-obs" class="aranya-btn aranya-btn-primary" style="width:100%">
+              <span>🛡️ DISPATCH RAPID RESPONSE TEAM ALPHA</span>
+            </button>
+            <button id="btn-siren-from-obs" class="aranya-btn aranya-btn-secondary" style="width:100%">
+              <span>📢 TRIGGER ACOUSTIC VIRTUAL FENCE (120 dB)</span>
+            </button>
+            <button id="btn-sms-from-obs" class="aranya-btn aranya-btn-secondary" style="width:100%">
+              <span>📲 BROADCAST VILLAGE EARLY-WARNING SMS</span>
+            </button>
+          </div>
+        </div>
+      `;
+
+      document
+        .getElementById('btn-dispatch-team-from-obs')
+        ?.addEventListener('click', async () => {
+          const teamBase = { lon: 78.238, lat: 30.012 };
+          const targetCoords = {
+            lon: data.conflictHotspot?.lon || data.lon,
+            lat: data.conflictHotspot?.lat || data.lat,
+          };
+          this.mapVisualizer.animateTeamDispatch(
+            teamBase,
+            targetCoords,
+            'Team Alpha (QRU)',
+          );
+          this.showToast(
+            '🛡️ Patrol Dispatched',
+            'Quick Response Team Alpha dispatched to conflict intercept zone!',
+            'success',
+          );
+        });
+
+      document
+        .getElementById('btn-siren-from-obs')
+        ?.addEventListener('click', () => {
+          const targetCoords = {
+            lon: data.conflictHotspot?.lon || data.lon,
+            lat: data.conflictHotspot?.lat || data.lat,
+          };
+          this.mapVisualizer.triggerAcousticDeterrentEffect(targetCoords);
+          this.showToast(
+            '📢 Siren Activated',
+            'Acoustic virtual fence deterrent sounding at 120 dB along perimeter!',
+            'warning',
+          );
+        });
+
+      document
+        .getElementById('btn-sms-from-obs')
+        ?.addEventListener('click', () => {
+          this.showToast(
+            '📲 SMS Advisory Sent',
+            'Automated early-warning broadcast sent to Ward Sarpanch & WhatsApp Network.',
+            'info',
+          );
+        });
+    } else if (type === 'risk') {
       titleEl.innerHTML = `<span>⚠️ EXPLAINABLE RISK ENGINE</span>`;
       const cat = getRiskCategory(data.overallScore);
       const scoreColor = cat.color;
@@ -392,7 +627,9 @@ export class AranyaUi {
             WHY IS THIS AREA HIGH RISK? (EVIDENCE BREAKDOWN)
           </div>
 
-          ${Object.entries(data.factors || {}).map(([key, f]) => `
+          ${Object.entries(data.factors || {})
+            .map(
+              ([key, f]) => `
             <div class="aranya-factor-row">
               <div class="aranya-factor-meta">
                 <span style="text-transform:capitalize;font-weight:600">${key.replace(/([A-Z])/g, ' $1')}</span>
@@ -403,7 +640,9 @@ export class AranyaUi {
               </div>
               <div class="aranya-factor-desc">${f.description}</div>
             </div>
-          `).join('')}
+          `,
+            )
+            .join('')}
 
           <div style="margin-top:16px;padding:12px;background:rgba(9,18,14,0.6);border-radius:8px;border:1px solid rgba(52,211,153,0.2)">
             <div style="font-size:11px;font-weight:800;color:#38bdf8;margin-bottom:4px">RECOMMENDED AI ACTION</div>
@@ -418,12 +657,26 @@ export class AranyaUi {
         </div>
       `;
 
-      document.getElementById('btn-dispatch-from-risk')?.addEventListener('click', async () => {
-        await defaultFieldTeamProvider.dispatchTeam('TEAM-ALPHA', `ALERT-${data.id}`, { lat: data.centerLat, lon: data.centerLon });
-        alert(`Team Alpha (QRU) dispatched to ${data.name}!`);
-        this.renderNavTab();
-      });
-
+      document
+        .getElementById('btn-dispatch-from-risk')
+        ?.addEventListener('click', async () => {
+          await defaultFieldTeamProvider.dispatchTeam(
+            'TEAM-ALPHA',
+            `ALERT-${data.id}`,
+            { lat: data.centerLat, lon: data.centerLon },
+          );
+          this.mapVisualizer.animateTeamDispatch(
+            { lon: 78.238, lat: 30.012 },
+            { lon: data.centerLon, lat: data.centerLat },
+            'Team Alpha (QRU)',
+          );
+          this.showToast(
+            '🛡️ Team Dispatched',
+            `Team Alpha dispatched to ${data.name}!`,
+            'success',
+          );
+          this.renderNavTab();
+        });
     } else if (type === 'trap') {
       titleEl.innerHTML = `<span>📷 CAMERA TRAP INSPECTOR</span>`;
       bodyEl.innerHTML = `
@@ -434,27 +687,27 @@ export class AranyaUi {
           </div>
           <div class="aranya-card-sub" style="margin-bottom:12px">Grid ID: ${data.id} · Model: Reconyx HyperFire 2 Dual-Optic</div>
 
-          <div style="width:100%;height:180px;background:#0d1813;border:1px solid var(--aranya-border);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;overflow:hidden;margin-bottom:14px">
-            <div style="font-size:48px;margin-bottom:8px">🐆</div>
-            <div style="font-size:11px;font-weight:700;color:#34d399">INFRARED SENSOR CAPTURE · 20:42 IST</div>
-            <div style="position:absolute;bottom:8px;right:8px;font-size:10px;font-family:var(--aranya-font-mono);background:rgba(0,0,0,0.7);padding:2px 6px;border-radius:4px">
-              CONFIDENCE: ${(data.confidence * 100).toFixed(0)}%
+          <div style="width:100%;height:140px;background:#0d1813;border:1px solid var(--aranya-border);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;overflow:hidden;margin-bottom:14px">
+            <div style="font-size:42px;margin-bottom:6px">${data.lastDetection?.species === 'Asian Elephant' ? '🐘' : '🐆'}</div>
+            <div style="font-size:11px;font-weight:700;color:#34d399">INFRARED THERMAL SENSOR CAPTURE</div>
+            <div style="position:absolute;bottom:6px;right:6px;font-size:10px;font-family:var(--aranya-font-mono);background:rgba(0,0,0,0.7);padding:2px 6px;border-radius:4px">
+              CONFIDENCE: ${Math.round((data.lastDetection?.confidence || 0.94) * 100)}%
             </div>
           </div>
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
             <div style="background:rgba(8,16,12,0.6);padding:8px;border-radius:6px;border:1px solid rgba(52,211,153,0.15)">
               <div class="aranya-stat-label">LAST SIGHTING</div>
-              <strong style="font-size:12px;color:#f0fdf4">${data.lastTriggerSpecies || 'None'}</strong>
+              <strong style="font-size:12px;color:#f0fdf4">${data.lastDetection?.species || data.lastTriggerSpecies || 'None'}</strong>
             </div>
             <div style="background:rgba(8,16,12,0.6);padding:8px;border-radius:6px;border:1px solid rgba(52,211,153,0.15)">
-              <div class="aranya-stat-label">NEAREST VILLAGE</div>
-              <strong style="font-size:12px;color:#f59e0b">${data.nearestVillage || 'Raiwala (180m)'}</strong>
+              <div class="aranya-stat-label">BATTERY HEALTH</div>
+              <strong style="font-size:12px;color:#10b981">${data.battery || 88}% (Solar Linked)</strong>
             </div>
           </div>
 
           <div class="aranya-card-sub" style="margin-bottom:12px;color:#e2e8f0">
-            <strong>Hardware Diagnostics:</strong> Battery 94% · Cellular Uplink nominal · Solar charge active · Storage 68%
+            <strong>Diagnostics:</strong> Uplink nominal · 4G LTE signal -68 dBm · MicroSD 74% free
           </div>
 
           <button id="btn-inspect-trap-risk" class="aranya-btn aranya-btn-primary" style="width:100%">
@@ -463,11 +716,12 @@ export class AranyaUi {
         </div>
       `;
 
-      document.getElementById('btn-inspect-trap-risk')?.addEventListener('click', async () => {
-        const cell = await defaultRiskProvider.getCellById('RISK-008');
-        if (cell) this.inspectItem('risk', cell);
-      });
-
+      document
+        .getElementById('btn-inspect-trap-risk')
+        ?.addEventListener('click', async () => {
+          const cell = await defaultRiskProvider.getCellById('RISK-008');
+          if (cell) this.inspectItem('risk', cell);
+        });
     } else if (type === 'alert') {
       titleEl.innerHTML = `<span>🚨 PRIORITY ALERT & VERIFICATION</span>`;
       bodyEl.innerHTML = `
@@ -491,7 +745,7 @@ export class AranyaUi {
           <div class="aranya-verify-step">
             <div class="aranya-step-num">1</div>
             <div>
-              <strong style="font-size:12px;color:#f0fdf4">Automated Detection & Escalation</strong>
+              <strong style="font-size:12px;color:#f0fdf4">Automated Sensor Detection</strong>
               <div style="font-size:10px;color:var(--aranya-text-muted)">Verified via CAM-017 & CAM-018</div>
             </div>
           </div>
@@ -513,54 +767,236 @@ export class AranyaUi {
           </div>
 
           <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
-            ${data.status === 'NEW' ? `
+            ${
+              data.status === 'NEW'
+                ? `
               <button id="btn-dispatch-team-alpha" class="aranya-btn aranya-btn-primary">
                 <span>🛡️ DISPATCH TEAM ALPHA (QRU)</span>
               </button>
-            ` : data.status === 'ASSIGNED' || data.status === 'IN_VERIFICATION' ? `
+            `
+                : data.status === 'ASSIGNED' ||
+                    data.status === 'IN_VERIFICATION'
+                  ? `
               <button id="btn-submit-outcome" class="aranya-btn aranya-btn-primary">
                 <span>📋 SUBMIT FIELD VERIFICATION OUTCOME</span>
               </button>
-            ` : `
+            `
+                  : `
               <div style="padding:10px;background:rgba(16,185,129,0.2);border:1px solid var(--aranya-emerald);border-radius:6px;text-align:center;font-size:12px;font-weight:700;color:#34d399">
                 ✓ VERIFIED & DEFUSED BY GROUND TEAM
               </div>
-            `}
+            `
+            }
           </div>
         </div>
       `;
 
-      document.getElementById('btn-dispatch-team-alpha')?.addEventListener('click', async () => {
-        await defaultFieldTeamProvider.dispatchTeam('TEAM-ALPHA', data.id, { lat: data.lat, lon: data.lon });
-        await defaultAlertProvider.updateAlertStatus(data.id, 'IN_VERIFICATION', 'TEAM-ALPHA');
-        alert(`Team Alpha dispatched to ${data.title}!`);
-        this.inspectItem('alert', await defaultAlertProvider.getAlertById(data.id));
-        this.renderNavTab();
-        this._updateCounters();
-      });
-
-      document.getElementById('btn-submit-outcome')?.addEventListener('click', async () => {
-        await defaultFieldTeamProvider.submitVerificationReport(data.id, {
-          teamId: 'TEAM-ALPHA',
-          outcomeType: 'deterrent_applied',
-          findings: 'Visual confirmation of adult leopard tracks 45m from boma. Sirens sounded.',
-          threatStatus: 'RESOLVED_DEFUSED'
+      document
+        .getElementById('btn-dispatch-team-alpha')
+        ?.addEventListener('click', async () => {
+          await defaultFieldTeamProvider.dispatchTeam('TEAM-ALPHA', data.id, {
+            lat: data.lat,
+            lon: data.lon,
+          });
+          await defaultAlertProvider.updateAlertStatus(
+            data.id,
+            'IN_VERIFICATION',
+            'TEAM-ALPHA',
+          );
+          this.mapVisualizer.animateTeamDispatch(
+            { lon: 78.238, lat: 30.012 },
+            { lon: data.lon, lat: data.lat },
+            'Team Alpha (QRU)',
+          );
+          this.showToast(
+            '🛡️ Team Dispatched',
+            `Team Alpha dispatched to ${data.title}!`,
+            'success',
+          );
+          this.inspectItem(
+            'alert',
+            await defaultAlertProvider.getAlertById(data.id),
+          );
+          this.renderNavTab();
+          this._updateCounters();
         });
-        await defaultAlertProvider.updateAlertStatus(data.id, 'VERIFIED', 'TEAM-ALPHA');
-        alert('Field Verification Report filed! Alert resolved and threat defused.');
-        this.inspectItem('alert', await defaultAlertProvider.getAlertById(data.id));
-        this.renderNavTab();
-        this._updateCounters();
-      });
-    } else {
-      // Generic item inspection
-      titleEl.innerHTML = `<span>INTELLIGENCE INSPECTOR</span>`;
+
+      document
+        .getElementById('btn-submit-outcome')
+        ?.addEventListener('click', async () => {
+          await defaultFieldTeamProvider.submitVerificationReport(data.id, {
+            teamId: 'TEAM-ALPHA',
+            outcomeType: 'deterrent_applied',
+            findings:
+              'Visual confirmation of adult leopard tracks 45m from boma. Sirens sounded.',
+            threatStatus: 'RESOLVED_DEFUSED',
+          });
+          await defaultAlertProvider.updateAlertStatus(
+            data.id,
+            'VERIFIED',
+            'TEAM-ALPHA',
+          );
+          this.showToast(
+            '📋 Report Filed',
+            'Field Verification Report filed! Alert resolved and threat defused.',
+            'success',
+          );
+          this.inspectItem(
+            'alert',
+            await defaultAlertProvider.getAlertById(data.id),
+          );
+          this.renderNavTab();
+          this._updateCounters();
+        });
+    } else if (type === 'settlement') {
+      titleEl.innerHTML = `<span>🏘️ VILLAGE INTERFACE DOSSIER</span>`;
       bodyEl.innerHTML = `
         <div class="aranya-risk-engine-card">
-          <strong style="font-size:16px;color:#f0fdf4">${data.name || data.title || 'Selected Target'}</strong>
-          <pre style="margin-top:12px;font-size:11px;font-family:var(--aranya-font-mono);color:#cbd5e1;overflow-x:auto;white-space:pre-wrap">${JSON.stringify(data, null, 2)}</pre>
+          <div class="aranya-card-top">
+            <strong style="font-size:16px;color:#f0fdf4">${data.name}</strong>
+            <span class="aranya-badge aranya-badge-amber">DISTANCE: ${data.distanceToForestMeters}m</span>
+          </div>
+          <div class="aranya-card-sub" style="margin-bottom:12px">Type: ${data.type} · Population: ${data.population?.toLocaleString() || 12400}</div>
+
+          <div style="background:rgba(8,16,12,0.6);padding:10px;border-radius:8px;border:1px solid rgba(52,211,153,0.2);margin-bottom:12px">
+            <div class="aranya-stat-label">PRIMARY CONFLICT VULNERABILITY</div>
+            <div style="font-size:12px;color:#f0fdf4;margin-top:4px">${data.primaryVulnerability}</div>
+          </div>
+
+          <div style="background:rgba(8,16,12,0.6);padding:10px;border-radius:8px;border:1px solid rgba(52,211,153,0.2);margin-bottom:12px">
+            <div class="aranya-stat-label">ACTIVE MITIGATION MEASURES</div>
+            <div style="font-size:12px;color:#34d399;margin-top:4px">${data.activeMitigation}</div>
+          </div>
+
+          <button id="btn-broadcast-to-village" class="aranya-btn aranya-btn-primary" style="width:100%">
+            <span>📲 SEND WARD EARLY-WARNING SMS</span>
+          </button>
         </div>
       `;
+
+      document
+        .getElementById('btn-broadcast-to-village')
+        ?.addEventListener('click', () => {
+          this.showToast(
+            '📲 SMS Advisory Sent',
+            `Early-warning broadcast transmitted to ${data.name} Ward Captains.`,
+            'info',
+          );
+        });
+    } else if (type === 'corridor') {
+      titleEl.innerHTML = `<span>🌲 CORRIDOR HEALTH DOSSIER</span>`;
+      bodyEl.innerHTML = `
+        <div class="aranya-risk-engine-card">
+          <div class="aranya-card-top">
+            <strong style="font-size:16px;color:#f0fdf4">${data.name}</strong>
+            <span class="aranya-badge aranya-badge-blue">FN: ${data.functionalityScore}/100</span>
+          </div>
+          <div class="aranya-card-sub" style="margin-bottom:12px">${data.description}</div>
+
+          <div style="background:rgba(8,16,12,0.6);padding:10px;border-radius:8px;border:1px solid rgba(52,211,153,0.2);margin-bottom:12px">
+            <div class="aranya-stat-label">CRITICAL BOTTLENECK PINCH-POINTS</div>
+            <div style="font-size:12px;color:#f59e0b;margin-top:4px">${data.pinchPoints ? data.pinchPoints.join(' · ') : 'Highway overpass culvert KM-42'}</div>
+          </div>
+
+          <div style="background:rgba(8,16,12,0.6);padding:10px;border-radius:8px;border:1px solid rgba(52,211,153,0.2);margin-bottom:12px">
+            <div class="aranya-stat-label">KEY CORRIDOR USERS</div>
+            <div style="font-size:12px;color:#f0fdf4;margin-top:4px">${(data.keyUsers || ['Asian Elephant', 'Bengal Tiger', 'Indian Leopard']).join(', ')}</div>
+          </div>
+        </div>
+      `;
+    } else if (type === 'team') {
+      titleEl.innerHTML = `<span>🛡️ FIELD RESPONSE TEAM</span>`;
+      bodyEl.innerHTML = `
+        <div class="aranya-risk-engine-card">
+          <div class="aranya-card-top">
+            <strong style="font-size:16px;color:#f0fdf4">${data.name}</strong>
+            <span class="aranya-badge ${data.status === 'dispatched' ? 'aranya-badge-red' : 'aranya-badge-green'}">${data.status.toUpperCase()}</span>
+          </div>
+          <div class="aranya-card-sub" style="margin-bottom:12px">Division: ${data.division} · Base: ${data.baseStation}</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+            <div style="background:rgba(8,16,12,0.6);padding:8px;border-radius:6px;border:1px solid rgba(52,211,153,0.15)">
+              <div class="aranya-stat-label">PATROL VEHICLE</div>
+              <strong style="font-size:12px;color:#f0fdf4">${data.vehicle}</strong>
+            </div>
+            <div style="background:rgba(8,16,12,0.6);padding:8px;border-radius:6px;border:1px solid rgba(52,211,153,0.15)">
+              <div class="aranya-stat-label">EQUIPMENT</div>
+              <strong style="font-size:12px;color:#38bdf8">${data.equipment?.length || 4} Tools Active</strong>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (type === 'scenario') {
+      titleEl.innerHTML = `<span>⚡ SIMULATION INTELLIGENCE DOSSIER</span>`;
+      const xai = data.aiThoughtProcess;
+      bodyEl.innerHTML = `
+        <div class="aranya-risk-engine-card">
+          <div class="aranya-modal-kicker">ACTIVE MULTI-STEP SIMULATION</div>
+          <strong style="font-size:18px;color:#f0fdf4">${data.title}</strong>
+          <div class="aranya-card-sub" style="margin:4px 0 12px">${data.subtitle}</div>
+
+          <div style="background:rgba(8, 20, 16, 0.95);padding:12px;border-radius:10px;border:1px solid rgba(52, 211, 153, 0.4);margin-bottom:14px">
+            <div style="font-size:11px;font-weight:800;color:#34d399;text-transform:uppercase;margin-bottom:4px">
+              🧠 AI PREDICTIVE THOUGHT PROCESS
+            </div>
+            <div style="font-size:12px;font-weight:700;color:#f0fdf4;margin-bottom:8px">
+              ${xai?.predictionSummary || 'Ingress trajectory targeting boundary interface'}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              ${(xai?.reasoningSteps || [])
+                .map(
+                  (r) => `
+                <div style="background:rgba(255,255,255,0.04);padding:6px 8px;border-radius:4px;border-left:2px solid #34d399">
+                  <strong style="font-size:10px;color:#34d399">${r.factor}:</strong>
+                  <span style="font-size:11px;color:#cbd5e1">${r.detail}</span>
+                </div>
+              `,
+                )
+                .join('')}
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button id="btn-sim-dispatch" class="aranya-btn aranya-btn-primary">
+              <span>🛡️ EXECUTE QRT INTERCEPT DISPATCH</span>
+            </button>
+            <button id="btn-sim-deterrent" class="aranya-btn aranya-btn-secondary">
+              <span>📢 TRIGGER ACOUSTIC DETERRENT SIREN</span>
+            </button>
+          </div>
+        </div>
+      `;
+
+      document
+        .getElementById('btn-sim-dispatch')
+        ?.addEventListener('click', () => {
+          const cz = data.conflictZone;
+          this.mapVisualizer.animateTeamDispatch(
+            { lon: 78.238, lat: 30.012 },
+            { lon: cz.centerLon, lat: cz.centerLat },
+            'Team Alpha',
+          );
+          this.showToast(
+            '🛡️ Dispatched',
+            'Rapid Response Team Alpha in transit to conflict zone.',
+            'success',
+          );
+        });
+
+      document
+        .getElementById('btn-sim-deterrent')
+        ?.addEventListener('click', () => {
+          const cz = data.conflictZone;
+          this.mapVisualizer.triggerAcousticDeterrentEffect({
+            lon: cz.centerLon,
+            lat: cz.centerLat,
+          });
+          this.showToast(
+            '📢 Siren Activated',
+            'Acoustic Virtual Fence sounding along perimeter.',
+            'warning',
+          );
+        });
     }
   }
 
@@ -568,17 +1004,17 @@ export class AranyaUi {
   // 4. MODALS (WELCOME & EVENT SIMULATOR)
   // -------------------------------------------------------------
   _buildModals() {
-    // Welcome Modal
+    // 4.1 Welcome Modal
     const welcomeModal = document.createElement('div');
     welcomeModal.id = 'aranya-welcome-modal';
     welcomeModal.className = 'aranya-modal-backdrop';
-    welcomeModal.style.display = 'none';
     welcomeModal.innerHTML = `
       <div class="aranya-modal-card">
-        <div class="aranya-modal-kicker">PROTOTYPE GEOSPATIAL INTELLIGENCE</div>
-        <h2 class="aranya-modal-title">ARANYA — Wildlife & Human-Conflict Intelligence Platform</h2>
+        <div class="aranya-modal-kicker">WILDLIFE & HUMAN-CONFLICT INTELLIGENCE</div>
+        <h2 class="aranya-modal-title">Welcome to ARANYA</h2>
         <p class="aranya-modal-p">
-          A specialized decision-support prototype for monitoring wildlife movement, corridor fragmentation, and human-wildlife conflict zones in India, with <strong>Uttarakhand (Rajaji & Corbett landscapes)</strong> as the primary pilot geography.
+          A prototype geospatial decision-support platform designed to track wildlife movement patterns,
+          monitor ecological corridor fragmentation, and anticipate human-wildlife conflict risk zones in India.
         </p>
 
         <div class="aranya-entry-choices">
@@ -586,76 +1022,83 @@ export class AranyaUi {
             <span class="aranya-entry-icon">🏔️</span>
             <div class="aranya-entry-text">
               <strong>ENTER UTTARAKHAND PILOT (RECOMMENDED)</strong>
-              <small>Explore Rajaji-Corbett corridors, Raiwala leopard conflict interfaces, and real-time camera traps</small>
+              <small>Explore Rajaji-Corbett corridors, camera traps, live alerts, and Raiwala conflict interface.</small>
             </div>
           </button>
+
           <button id="entry-india" class="aranya-entry-btn" type="button">
             <span class="aranya-entry-icon">🇮🇳</span>
             <div class="aranya-entry-text">
               <strong>ENTER INDIA OVERVIEW</strong>
-              <small>Subcontinent-scale wildlife corridors, tiger reserves, and protected biosphere network</small>
+              <small>National wildlife corridor overview and subcontinental protected reserve clusters.</small>
             </div>
           </button>
+
           <button id="entry-global" class="aranya-entry-btn" type="button">
             <span class="aranya-entry-icon">🌐</span>
             <div class="aranya-entry-text">
               <strong>GLOBAL CONTEXT</strong>
-              <small>Planetary vegetation health (NDVI) and biosphere comparisons</small>
+              <small>Explore planetary satellite imagery and high-altitude contextual terrain.</small>
             </div>
           </button>
         </div>
 
-        <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--aranya-text-muted)">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-            <input id="chk-dont-show-welcome" type="checkbox" />
-            <span>Don't show on startup</span>
+        <div style="margin-top:20px;display:flex;align-items:center;justify-content:space-between">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--aranya-text-muted);cursor:pointer">
+            <input type="checkbox" id="chk-dont-show-welcome" /> Do not show again
           </label>
-          <button id="btn-close-welcome" style="background:transparent;border:none;color:#34d399;font-weight:700;cursor:pointer">CLOSE</button>
+          <button id="btn-close-welcome" class="aranya-btn aranya-btn-secondary" type="button">Enter Platform</button>
         </div>
       </div>
     `;
     document.body.appendChild(welcomeModal);
 
-    // Simulator Modal
+    // 4.2 Simulator Modal
     const simModal = document.createElement('div');
     simModal.id = 'aranya-simulator-modal';
     simModal.className = 'aranya-modal-backdrop';
     simModal.style.display = 'none';
     simModal.innerHTML = `
       <div class="aranya-modal-card" style="width:720px">
-        <div class="aranya-modal-kicker">SCENARIO DEMONSTRATION ENGINE</div>
-        <h2 class="aranya-modal-title">Live Event Simulator</h2>
+        <div class="aranya-modal-kicker">DECISION SUPPORT SIMULATOR</div>
+        <h2 class="aranya-modal-title">Interactive Conflict Scenarios</h2>
         <p class="aranya-modal-p">
-          Select a realistic operational scenario to simulate sensor triggers, real-time risk escalation, alert broadcasts, and ground team verification.
+          Select an operational scenario to simulate sensor triggers, historical tracks, AI predictive trajectories, and field response workflows live on the 3D globe.
         </p>
 
         <div class="aranya-scenario-grid">
-          ${scenariosData.map(s => `
+          ${scenariosData
+            .map(
+              (s) => `
             <div class="aranya-scenario-card" data-scenario-id="${s.id}">
               <div>
                 <h4>${s.title}</h4>
-                <div style="font-size:10px;font-weight:700;color:#f59e0b;margin-bottom:6px">${s.species}</div>
+                <div style="font-size:10px;font-weight:700;color:var(--aranya-emerald);margin-bottom:6px">${s.subtitle}</div>
                 <p>${s.description}</p>
               </div>
-              <button class="aranya-btn aranya-btn-primary" type="button" style="margin-top:10px">
-                <span>▶ RUN SCENARIO</span>
+              <button class="aranya-btn aranya-btn-primary" type="button">
+                <span>⚡ EXECUTE SCENARIO</span>
               </button>
             </div>
-          `).join('')}
+          `,
+            )
+            .join('')}
         </div>
 
         <div style="margin-top:20px;text-align:right">
-          <button id="btn-close-sim" class="aranya-btn aranya-btn-secondary" style="display:inline-flex;width:auto;padding:8px 18px">CLOSE</button>
+          <button id="btn-close-sim" class="aranya-btn aranya-btn-secondary" type="button">Close Simulator</button>
         </div>
       </div>
     `;
     document.body.appendChild(simModal);
 
     // Attach modal events
-    document.getElementById('entry-uttarakhand')?.addEventListener('click', () => {
-      this.closeWelcomeModal();
-      flyToPreset(this.viewer, 'uttarakhand');
-    });
+    document
+      .getElementById('entry-uttarakhand')
+      ?.addEventListener('click', () => {
+        this.closeWelcomeModal();
+        flyToPreset(this.viewer, 'uttarakhand');
+      });
     document.getElementById('entry-india')?.addEventListener('click', () => {
       this.closeWelcomeModal();
       flyToPreset(this.viewer, 'india');
@@ -664,10 +1107,14 @@ export class AranyaUi {
       this.closeWelcomeModal();
       flyToPreset(this.viewer, 'global');
     });
-    document.getElementById('btn-close-welcome')?.addEventListener('click', () => this.closeWelcomeModal());
-    document.getElementById('btn-close-sim')?.addEventListener('click', () => this.closeSimulatorModal());
+    document
+      .getElementById('btn-close-welcome')
+      ?.addEventListener('click', () => this.closeWelcomeModal());
+    document
+      .getElementById('btn-close-sim')
+      ?.addEventListener('click', () => this.closeSimulatorModal());
 
-    simModal.querySelectorAll('.aranya-scenario-card').forEach(card => {
+    simModal.querySelectorAll('.aranya-scenario-card').forEach((card) => {
       card.querySelector('button')?.addEventListener('click', () => {
         const scenarioId = card.dataset.scenarioId;
         this.runScenario(scenarioId);
@@ -699,15 +1146,22 @@ export class AranyaUi {
     if (el) el.style.display = 'none';
   }
 
+  // -------------------------------------------------------------
+  // 5. RUN SCENARIO WITH LIVE MAP VISUALIZATION & AI REASONING
+  // -------------------------------------------------------------
   async runScenario(scenarioId) {
-    const scenario = scenariosData.find(s => s.id === scenarioId);
+    const scenario = scenariosData.find((s) => s.id === scenarioId);
     if (!scenario) return;
 
     this.closeSimulatorModal();
 
-    // 1. Move camera smoothly to scenario location
+    // 1. Move camera smoothly to scenario location on the 3D globe
     this.viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(scenario.targetLon, scenario.targetLat, scenario.cameraHeight),
+      destination: Cesium.Cartesian3.fromDegrees(
+        scenario.targetLon,
+        scenario.targetLat,
+        scenario.cameraHeight,
+      ),
       orientation: {
         heading: Cesium.Math.toRadians(25),
         pitch: Cesium.Math.toRadians(scenario.cameraPitch),
@@ -717,9 +1171,20 @@ export class AranyaUi {
       easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT,
     });
 
-    // 2. Execute scenario steps sequentially
+    // 2. Render Historical Path, AI Forward Trajectory & Conflict Hotspot on Map
+    this.mapVisualizer.visualizeSimulation(scenario);
+
+    // 3. Open Intelligence Inspector with complete AI Thought Process & Actions
+    this.inspectItem('scenario', scenario);
+    this.showToast(
+      '⚡ Scenario Initiated',
+      `${scenario.title} running with AI trajectory prediction.`,
+      'info',
+    );
+
+    // 4. Execute scenario steps sequentially
     for (const step of scenario.steps) {
-      await new Promise(resolve => setTimeout(resolve, step.delayMs));
+      await new Promise((resolve) => setTimeout(resolve, step.delayMs));
 
       if (step.action === 'TRIGGER_CAMERA_TRAP') {
         defaultWildlifeProvider.addSimulatedObservation({
@@ -729,18 +1194,53 @@ export class AranyaUi {
           lat: scenario.targetLat,
           lon: scenario.targetLon,
         });
+        this.showToast('📷 Camera Trap Triggered', step.message, 'warning');
       } else if (step.action === 'UPDATE_RISK_CELL') {
         defaultRiskProvider.updateCellRisk(step.cellId, step.score);
+        this.showToast('⚠️ Risk Grid Escalation', step.message, 'error');
       } else if (step.action === 'GENERATE_ALERT') {
         const alert = await defaultAlertProvider.getAlertById(step.alertId);
         if (alert) {
-          this.inspectItem('alert', alert);
+          this.showToast('🚨 Priority Alert Generated', alert.title, 'error');
         }
       }
     }
 
+    await this._initMapLayers();
     this._updateCounters();
     this.renderNavTab();
+  }
+
+  // -------------------------------------------------------------
+  // TOAST NOTIFICATIONS
+  // -------------------------------------------------------------
+  _buildToastContainer() {
+    const c = document.createElement('div');
+    c.id = 'aranya-toast-container';
+    c.style.cssText =
+      'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none';
+    document.body.appendChild(c);
+  }
+
+  showToast(title, message, type = 'info') {
+    const c = document.getElementById('aranya-toast-container');
+    if (!c) return;
+
+    const toast = document.createElement('div');
+    const borderCol =
+      type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#10b981';
+    toast.style.cssText = `background:rgba(6,18,12,0.92);border:1px solid ${borderCol};box-shadow:0 8px 30px rgba(0,0,0,0.6);backdrop-filter:blur(10px);color:#f0fdf4;padding:12px 18px;border-radius:10px;font-size:12px;display:flex;flex-direction:column;gap:2px;pointer-events:auto;min-width:320px;max-width:90vw;animation:aranyaFadeIn 0.3s ease`;
+    toast.innerHTML = `
+      <div style="font-weight:800;color:${borderCol};font-size:11px;letter-spacing:0.5px">${title}</div>
+      <div style="color:#e2e8f0;font-size:12px;line-height:1.4">${message}</div>
+    `;
+    c.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.4s ease';
+      setTimeout(() => toast.remove(), 400);
+    }, 4500);
   }
 
   _attachEntitySelectionListener() {
@@ -763,10 +1263,16 @@ export class AranyaUi {
 
   _subscribeProviders() {
     this.unsubscribers.push(
-      defaultWildlifeProvider.subscribe(() => this._updateCounters()),
-      defaultRiskProvider.subscribe(() => this._updateCounters()),
+      defaultWildlifeProvider.subscribe(() => {
+        this._updateCounters();
+        this._initMapLayers();
+      }),
+      defaultRiskProvider.subscribe(() => {
+        this._updateCounters();
+        this._initMapLayers();
+      }),
       defaultAlertProvider.subscribe(() => this._updateCounters()),
-      defaultFieldTeamProvider.subscribe(() => this._updateCounters())
+      defaultFieldTeamProvider.subscribe(() => this._updateCounters()),
     );
   }
 
@@ -775,7 +1281,7 @@ export class AranyaUi {
     const cells = await defaultRiskProvider.getRiskCells();
     const alerts = await defaultAlertProvider.getAlerts({ status: 'NEW' });
 
-    const maxScore = Math.max(...cells.map(c => c.overallScore), 0);
+    const maxScore = Math.max(...cells.map((c) => c.overallScore), 0);
 
     const sEl = document.getElementById('stat-sightings-val');
     if (sEl) sEl.textContent = `${obs.length}`;

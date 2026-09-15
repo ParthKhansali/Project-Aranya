@@ -5,11 +5,58 @@
     "subtitle": "Crepuscular carnivore approach toward domestic cattle sheds",
     "landscape": "Rajaji South / Raiwala Fringe",
     "targetLat": 30.0125,
-    "targetLon": 78.2380,
+    "targetLon": 78.238,
     "cameraHeight": 4500,
     "cameraPitch": -42,
     "species": "Panthera pardus (Indian Leopard)",
-    "description": "Simulates a sequence of automated camera trap triggers (CAM-017, CAM-018) along a seasonal drainage ravine leading straight into Raiwala Ward 4. Watch risk cell RISK-008 spike to 87, generate a critical alert, trace the ingress trail, and allow field verification dispatch to Team Alpha.",
+    "description": "Simulates an automated sequence of camera trap triggers (CAM-017, CAM-018) along a seasonal drainage ravine leading straight into Raiwala Ward 4. Watch the 3D map trace the historical approach, project the forward AI ingress trajectory, highlight the conflict risk zone, and enable Rapid Response Team Alpha dispatch.",
+    "movementHistory": [
+      [78.201, 30.058, 410],
+      [78.208, 30.051, 385],
+      [78.214, 30.044, 360]
+    ],
+    "predictedTrajectory": [
+      [78.214, 30.044, 360],
+      [78.22, 30.038, 350],
+      [78.226, 30.031, 345],
+      [78.232, 30.024, 340]
+    ],
+    "conflictZone": {
+      "centerLon": 78.232,
+      "centerLat": 30.024,
+      "radiusMeters": 480,
+      "label": "Raiwala Ward 4 Livestock Corrals",
+      "riskLevel": 87
+    },
+    "aiThoughtProcess": {
+      "model": "ARANYA Decision Support Engine v2.4 (Friction Surface + Least-Cost Corridors)",
+      "predictionSummary": "High-confidence predatory approach toward domestic cattle corrals in Raiwala Ward 4",
+      "confidenceScore": "93% Confidence",
+      "estimatedTimeOfArrival": "35 - 45 minutes (20:25 IST)",
+      "reasoningSteps": [
+        {
+          "factor": "Topographic Canalization",
+          "detail": "Animal is descending a seasonal scrub gully (slope 9°), which provides a natural path of least physical resistance avoiding 38° ridgelines."
+        },
+        {
+          "factor": "Vegetative Canopy Shield",
+          "detail": "Riverine scrub canopy density exceeds 78%, masking nocturnal movement from village perimeter searchlights."
+        },
+        {
+          "factor": "High-Value Prey Cue",
+          "detail": "14 unfortified domestic cattle corrals are situated at the ravine mouth; previous leopard cattle predation recorded 9 days ago."
+        },
+        {
+          "factor": "Infrastructure Avoidance",
+          "detail": "Predicted path deflects away from the bright illumination of the Haridwar-Rishikesh highway corridor."
+        }
+      ],
+      "recommendedActions": [
+        "Deploy Quick Response Team (QRT) Unit Alpha to Sector 4 intercept culvert",
+        "Trigger perimeter solar acoustic sirens along ravine mouth",
+        "Broadcast instant automated SMS alert to Raiwala Ward 4 residents"
+      ]
+    },
     "steps": [
       {
         "delayMs": 500,
@@ -45,26 +92,72 @@
     "title": "Scenario 2: Corridor Pinch-Point (Chilla-Motichur)",
     "subtitle": "Breeding herd attempting high-risk railway crossing",
     "landscape": "Rajaji Chilla-Motichur Corridor #07",
-    "targetLat": 30.0710,
-    "targetLon": 78.1920,
+    "targetLat": 30.071,
+    "targetLon": 78.192,
     "cameraHeight": 6500,
     "cameraPitch": -50,
     "species": "Elephas maximus (Asian Elephant)",
-    "description": "Examines corridor fragmentation where an elephant family of 5 approaches the Haridwar-Dehradun railway embankment. Triggers corridor health analytics and rail speed deceleration protocols.",
+    "description": "Examines corridor fragmentation where an elephant breeding herd of 6 individuals approaches the Haridwar-Dehradun railway embankment. AI projects track crossing at KM-42, prompting train deceleration protocols and solar deterrent activation.",
+    "movementHistory": [
+      [78.225, 30.012, 330],
+      [78.215, 30.019, 340],
+      [78.207, 30.026, 345]
+    ],
+    "predictedTrajectory": [
+      [78.207, 30.026, 345],
+      [78.202, 30.03, 350],
+      [78.196, 30.036, 355]
+    ],
+    "conflictZone": {
+      "centerLon": 78.202,
+      "centerLat": 30.03,
+      "radiusMeters": 550,
+      "label": "Railway Track Embankment KM-42 Crossing",
+      "riskLevel": 84
+    },
+    "aiThoughtProcess": {
+      "model": "ARANYA Pachyderm Corridor Model (Markov Chain + Track Bathymetry)",
+      "predictionSummary": "Elephant herd moving across railway embankment to access western Motichur foraging grounds",
+      "confidenceScore": "94% Confidence",
+      "estimatedTimeOfArrival": "25 - 35 minutes (18:45 IST)",
+      "reasoningSteps": [
+        {
+          "factor": "Seasonal Migration Corridor",
+          "detail": "Herd follows historic autumn corridor connecting Chilla water supply to western Rajaji sal forests."
+        },
+        {
+          "factor": "Ripening Crop Forage",
+          "detail": "Sugarcane plots on the west embankment have high sugar content detected by satellite NDVI (0.74)."
+        },
+        {
+          "factor": "Critical Pinch-Point",
+          "detail": "A 120m corridor bottleneck between flyover pillars forces the herd directly over open rail tracks."
+        },
+        {
+          "factor": "High-Speed Rail Hazard",
+          "detail": "Scheduled Dehradun Shatabdi Express is due through the section at 19:10 IST, creating high risk of collision."
+        }
+      ],
+      "recommendedActions": [
+        "Issue emergency 20 km/h train speed restriction to Northern Railway DRM Moradabad",
+        "Deploy Track Watchers with high-intensity beam searchlights to KM-42 culvert",
+        "Activate acoustic bee sound deterrent along rail embankment"
+      ]
+    },
     "steps": [
       {
         "delayMs": 800,
         "action": "TRIGGER_CAMERA_TRAP",
         "trapId": "CAM-022",
         "confidence": 0.98,
-        "message": "CAM-022 triggered: Herd of 5 elephants including juvenile detected near railway culvert."
+        "message": "CAM-022 triggered: Herd of 6 elephants including juvenile detected near railway culvert."
       },
       {
         "delayMs": 2500,
         "action": "UPDATE_RISK_CELL",
         "cellId": "RISK-004",
-        "score": 82,
-        "message": "Corridor bottleneck collision risk elevated to HIGH (82/100)."
+        "score": 84,
+        "message": "Corridor bottleneck collision risk elevated to HIGH (84/100)."
       },
       {
         "delayMs": 4000,
@@ -79,12 +172,49 @@
     "title": "Scenario 3: Habitat Pressure & Resort Fringe (Ramnagar)",
     "subtitle": "Apex predator navigation through encroached riparian buffer",
     "landscape": "Corbett Southern Buffer / Kosi River",
-    "targetLat": 29.4120,
-    "targetLon": 79.1120,
+    "targetLat": 29.412,
+    "targetLon": 79.112,
     "cameraHeight": 5500,
     "cameraPitch": -45,
     "species": "Panthera tigris (Bengal Tiger)",
-    "description": "Visualizes the impact of tourist resort expansion along the Kosi riverbed. Triggers tiger movement detection near Dhikuli resorts and prompts evening eco-curfew measures.",
+    "description": "Visualizes the impact of tourist resort development along the Kosi riverbed. AI projects a male tiger moving through a narrow riparian gravel bed between hotels, triggering evening pedestrian curfew advisories.",
+    "movementHistory": [
+      [78.995, 29.565, 430],
+      [78.988, 29.554, 410],
+      [78.978, 29.545, 390]
+    ],
+    "predictedTrajectory": [
+      [78.978, 29.545, 390],
+      [78.97, 29.538, 380],
+      [78.962, 29.53, 370]
+    ],
+    "conflictZone": {
+      "centerLon": 78.962,
+      "centerLat": 29.53,
+      "radiusMeters": 500,
+      "label": "Dhikuli Riverside Resort Buffer",
+      "riskLevel": 74
+    },
+    "aiThoughtProcess": {
+      "model": "ARANYA Apex Predator Tracking Engine",
+      "predictionSummary": "Adult male tiger navigating dry Kosi riverbed between tourist properties",
+      "confidenceScore": "90% Confidence",
+      "estimatedTimeOfArrival": "45 - 60 minutes",
+      "reasoningSteps": [
+        {
+          "factor": "Riparian Bypass",
+          "detail": "Tiger uses gravel riverbed to avoid resort fencing while moving between Corbett core and southern buffer."
+        },
+        {
+          "factor": "Guest Vulnerability",
+          "detail": "Evening riverside dining decks at Dhikuli resorts place unaware tourists within 60m of animal's path."
+        }
+      ],
+      "recommendedActions": [
+        "Issue mandatory outdoor curfew advisory to all Dhikuli riverside resorts",
+        "Deploy Corbett Buffer Quick Response Vehicle to river access road"
+      ]
+    },
     "steps": [
       {
         "delayMs": 800,
@@ -97,8 +227,8 @@
         "delayMs": 2500,
         "action": "UPDATE_RISK_CELL",
         "cellId": "RISK-015",
-        "score": 84,
-        "message": "Ramnagar River Corridor risk elevated to CRITICAL (84/100) due to tourist proximity."
+        "score": 74,
+        "message": "Ramnagar River Corridor risk elevated to HIGH (74/100) due to tourist proximity."
       },
       {
         "delayMs": 4000,
@@ -113,12 +243,49 @@
     "title": "Scenario 4: Perimeter Disturbance & Snare Threat",
     "subtitle": "Nocturnal human incursion in Shyampur Reserved Forest",
     "landscape": "Haridwar-Shyampur Forest Fringe",
-    "targetLat": 29.9450,
-    "targetLon": 78.1920,
+    "targetLat": 29.945,
+    "targetLon": 78.192,
     "cameraHeight": 4000,
     "cameraPitch": -40,
     "species": "Sus scrofa & Panthera pardus Interface",
     "description": "Simulates off-trail nocturnal activity along the reserved forest ditch where wire snares are historically placed. Dispatches anti-poaching patrol unit for ground comb.",
+    "movementHistory": [
+      [78.188, 29.952, 335],
+      [78.191, 29.946, 320],
+      [78.195, 29.94, 310]
+    ],
+    "predictedTrajectory": [
+      [78.195, 29.94, 310],
+      [78.198, 29.935, 305],
+      [78.202, 29.93, 300]
+    ],
+    "conflictZone": {
+      "centerLon": 78.202,
+      "centerLat": 29.93,
+      "radiusMeters": 420,
+      "label": "Shyampur Boundary Ditch & Snare Zone",
+      "riskLevel": 82
+    },
+    "aiThoughtProcess": {
+      "model": "ARANYA Poaching & Intrusion Risk Classifier",
+      "predictionSummary": "Unauthorized human presence detected near wildlife movement trail along boundary trench",
+      "confidenceScore": "89% Confidence",
+      "estimatedTimeOfArrival": "Immediate (Active Disturbance)",
+      "reasoningSteps": [
+        {
+          "factor": "Unauthorized Entry Time",
+          "detail": "Night-time movement (02:15 IST) along boundary ditch violates forest curfew rules."
+        },
+        {
+          "factor": "Historical Snaring Cluster",
+          "detail": "Compartment 4 ditch previously had 6 wire snares recovered during 2025 anti-poaching sweeps."
+        }
+      ],
+      "recommendedActions": [
+        "Dispatch Shyampur Anti-Poaching Patrol with metal detectors for ground sweep",
+        "Notify Haridwar Forest Division Flying Squad"
+      ]
+    },
     "steps": [
       {
         "delayMs": 800,
@@ -131,8 +298,8 @@
         "delayMs": 2500,
         "action": "UPDATE_RISK_CELL",
         "cellId": "RISK-012",
-        "score": 79,
-        "message": "Shyampur buffer vulnerability raised to HIGH (79/100)."
+        "score": 82,
+        "message": "Shyampur buffer vulnerability raised to HIGH (82/100)."
       },
       {
         "delayMs": 4000,
