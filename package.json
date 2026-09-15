@@ -30,6 +30,7 @@
     "rename-folder": "node scripts/rename-folder.mjs",
     "test:track": "node scripts/track-regression.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
+    "retire:tests": "node scripts/retire-obsolete-tests.mjs",
     "check:boundaries": "node scripts/check-package-boundaries.mjs"
   },
   "dependencies": {

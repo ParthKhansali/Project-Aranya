@@ -11,6 +11,7 @@ import { defaultFieldTeamProvider } from '../../data/aranya/fieldTeamProvider.js
 import { defaultAlertProvider } from '../../data/aranya/alertProvider.js';
 import scenariosData from '../../data/aranya/scenarios.json';
 import { CAMERA_PRESETS, flyToPreset } from '../../camera.js';
+import './aranya.css';
 
 export class AranyaUi {
   constructor({ viewer, dataManager, styleManager }) {
@@ -24,7 +25,14 @@ export class AranyaUi {
   }
 
   mount() {
-    this._injectStyles();
+    // Hide legacy intel HUD and any scope mask canvas
+    const intelHud = document.getElementById('intel-hud');
+    if (intelHud) {
+      intelHud.style.display = 'none';
+      intelHud.innerHTML = '';
+    }
+    document.getElementById('scope-mask')?.remove();
+
     this._buildTopHud();
     this._buildLeftNav();
     this._buildRightRail();
@@ -33,7 +41,7 @@ export class AranyaUi {
     this._subscribeProviders();
     this._updateCounters();
 
-    // Check if user has dismissed welcome modal previously
+    // Check if user has dismissed welcome modal previously; otherwise display starting choices
     const hasSeenWelcome = localStorage.getItem('aranya:welcomed');
     if (!hasSeenWelcome) {
       this.showWelcomeModal();
@@ -49,15 +57,6 @@ export class AranyaUi {
     document.getElementById('aranya-right-rail')?.remove();
     document.getElementById('aranya-welcome-modal')?.remove();
     document.getElementById('aranya-simulator-modal')?.remove();
-  }
-
-  _injectStyles() {
-    if (document.getElementById('aranya-custom-css')) return;
-    const link = document.createElement('link');
-    link.id = 'aranya-custom-css';
-    link.rel = 'stylesheet';
-    link.href = '/src/ui/aranya/aranya.css';
-    document.head.appendChild(link);
   }
 
   // -------------------------------------------------------------

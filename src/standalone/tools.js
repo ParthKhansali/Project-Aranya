@@ -47,9 +47,8 @@ export function createStandaloneTools({
   // its chance to register pre-install holds. (perf wave 2)
   installRenderGovernor(viewer);
 
-  // Install the explicit scope mask used by the DISPLAY controls.
-  installScopeMask(viewer);
-  defer(() => destroyScopeMask());
+  // For ARANYA, ensure scope mask vignette is destroyed for full-screen edge-to-edge view.
+  destroyScopeMask();
 
   // The follow camera recomputes the tracked target's dead-reckon position
   // every frame — tracking anything is a per-frame animation. (perf wave 2)

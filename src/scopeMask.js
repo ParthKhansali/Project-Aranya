@@ -101,8 +101,8 @@ const SCOPE_TERMINUS_SAMPLE_MS = 120;
 let _canvas = null;
 let _container = null;
 let _viewer = null;
-let _enabled = true;
-let _featherRatio = SCOPE_FEATHER_RATIO_DEFAULT;
+let _enabled = false;
+let _featherRatio = 0;
 let _resizeObserver = null;
 let _dprQuery = null;
 let _dprListener = null;
@@ -332,82 +332,25 @@ export function scopeMaskGeometry(width, height, featherRatio = _featherRatio) {
 }
 
 function draw() {
-  if (_coalescingPaint) { _paintDirty = true; return; } // one paint at scope exit
-  if (!_canvas || !_container) return;
-  // SCOPE OFF is the cheapest state, not a painted one: bail out BEFORE the
-  // backing-store resize + clear (a full-viewport allocation) that used to run
-  // on every disabled draw. The last painted mask is cleared exactly once, on
-  // the transition, and after that a disabled mask does no canvas work at all.
-  if (!_enabled) {
-    if (!_painted) return;
-    const clearCtx = _canvas.getContext('2d');
-    if (clearCtx) {
-      clearCtx.setTransform(1, 0, 0, 1, 0, 0);
-      clearCtx.clearRect(0, 0, _canvas.width, _canvas.height);
-    }
-    _painted = false;
-    return;
+  if (!_canvas) return;
+  const clearCtx = _canvas.getContext('2d');
+  if (clearCtx) {
+    clearCtx.setTransform(1, 0, 0, 1, 0, 0);
+    clearCtx.clearRect(0, 0, _canvas.width, _canvas.height);
   }
-  const width = _container.clientWidth;
-  const height = _container.clientHeight;
-  if (!(width > 0) || !(height > 0)) return;
-  const dpr = scopeMaskDevicePixelRatio();
-  _canvas.width = Math.round(width * dpr);
-  _canvas.height = Math.round(height * dpr);
-  const ctx = _canvas.getContext('2d');
-  if (!ctx) return;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, width, height);
-  _painted = false; // resize+clear wiped the surface; ink goes on below
-  const geo = scopeMaskGeometry(width, height, _featherRatio);
-  if (!geo) return;
-  const { r, g, b } = SCOPE_OUTSIDE_COLOR;
-  if (geo.outerR - geo.innerR < 1) {
-    // Zero/near-zero feather: a radial gradient with equal radii is
-    // DEGENERATE in Canvas2D (Chromium paints nothing — browser
-    // finding). Draw the hard crop explicitly: rect minus circle, evenodd.
-    // The hard crop honors the same altitude terminus — a hard edge at city
-    // scale must be fully opaque too, not 6% translucent.
-    ctx.fillStyle = `rgba(${r},${g},${b},${_terminusAlpha})`;
-    ctx.beginPath();
-    ctx.rect(0, 0, width, height);
-    ctx.arc(geo.centerX, geo.centerY, Math.max(1, geo.innerR), 0, Math.PI * 2);
-    ctx.fill('evenodd');
-    _painted = true;
-    return;
-  }
-  const gradient = ctx.createRadialGradient(
-    geo.centerX, geo.centerY, geo.innerR,
-    geo.centerX, geo.centerY, geo.outerR,
-  );
-  gradient.addColorStop(0, `rgba(${r},${g},${b},0)`);
-  gradient.addColorStop(1, `rgba(${r},${g},${b},${_terminusAlpha})`);
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
-  _painted = true;
+  _painted = false;
 }
 
 /**
  * Install the scope mask into the viewer container. Idempotent.
+ * For ARANYA, the black scope mask vignette is permanently retired to ensure
+ * a clean edge-to-edge 3D globe display.
  * @param {Cesium.Viewer} viewer
  * @returns {void}
  */
 export function installScopeMask(viewer) {
-  if (_canvas || !viewer?.container) return;
-  _container = viewer.container;
-  _viewer = viewer;
-  _canvas = document.createElement('canvas');
-  _canvas.id = 'scope-mask';
-  _canvas.setAttribute('aria-hidden', 'true');
-  _container.appendChild(_canvas);
-  _resizeObserver = new ResizeObserver(() => draw());
-  _resizeObserver.observe(_container);
-  watchDevicePixelRatio();
-  watchCameraHeight(viewer);
-  // Seed from the live camera so the first paint is already correct for the
-  // restored/initial altitude instead of flashing the globe-scale terminus.
-  _terminusAlpha = currentTerminusTarget();
-  draw();
+  _enabled = false;
+  destroyScopeMask();
 }
 
 /** @returns {number} Live camera height above the ellipsoid, or +Inf if unknown. */
