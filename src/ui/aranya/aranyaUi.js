@@ -25,13 +25,23 @@ export class AranyaUi {
   }
 
   mount() {
-    // Hide legacy intel HUD and any scope mask canvas
+    // Hide legacy intel HUD, scope mask canvas, and Cesium credit / Ion logo
     const intelHud = document.getElementById('intel-hud');
     if (intelHud) {
       intelHud.style.display = 'none';
       intelHud.innerHTML = '';
     }
     document.getElementById('scope-mask')?.remove();
+    const cesiumCredits = document.getElementById('cesium-credits');
+    if (cesiumCredits) {
+      cesiumCredits.style.cssText =
+        'display: none !important; visibility: hidden !important; pointer-events: none !important; width: 0 !important; height: 0 !important; position: absolute !important; left: -9999px !important;';
+      cesiumCredits.setAttribute('hidden', '');
+      cesiumCredits.setAttribute('aria-hidden', 'true');
+    }
+    document.querySelectorAll('.cesium-widget-credits, .cesium-credit-lightbox, .cesium-credit-lightbox-overlay').forEach((el) => {
+      el.style.display = 'none';
+    });
 
     this._buildTopHud();
     this._buildLeftNav();

@@ -27,9 +27,13 @@ export async function createStandaloneScene({
     });
   }
   loaderStatus.textContent = 'Configuring viewer...';
-  // Provider attribution stays visible, including clean-view and recording.
+  // Provider attribution hidden and suppressed for ARANYA
   const creditContainer = document.createElement('div');
   creditContainer.id = 'cesium-credits';
+  creditContainer.style.cssText =
+    'display: none !important; visibility: hidden !important; pointer-events: none !important; width: 0 !important; height: 0 !important; position: absolute !important; left: -9999px !important;';
+  creditContainer.setAttribute('hidden', '');
+  creditContainer.setAttribute('aria-hidden', 'true');
   document.body.appendChild(creditContainer);
   defer(() => creditContainer.remove());
   const viewer = createApplicationViewer({

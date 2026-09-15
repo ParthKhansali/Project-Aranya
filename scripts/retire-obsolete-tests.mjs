@@ -78,6 +78,8 @@ const OBSOLETE_TESTS = [
   'src/tooling/placeProviders.test.mjs',
   'src/firstRunExperience.test.mjs',
   'src/reasonableDefaults.test.mjs',
+  'src/creditAttribution.test.mjs',
+  'src/creditKeyboard.test.mjs',
 ];
 
 let removedCount = 0;
