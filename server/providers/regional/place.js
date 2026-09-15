@@ -21,8 +21,8 @@ function fetchRegionalPlace(point) {
     const payload = await fetchRegionalJson(
       `https://nominatim.openstreetmap.org/reverse?${params}`,
       {
-          'User-Agent': 'ARANYA/1.0',
-          Referer: 'https://aranya-intelligence.local',
+        'User-Agent': 'ARANYA/1.0',
+        Referer: 'https://aranya-intelligence.local',
       },
     );
     return normalizeRegionalPlace(payload);

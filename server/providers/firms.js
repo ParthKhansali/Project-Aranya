@@ -261,7 +261,9 @@ export function firmsProxy() {
         }
 
         if (!inflight) {
-          const refreshFn = key ? () => refreshUpstream(key) : () => refreshPublicUpstream();
+          const refreshFn = key
+            ? () => refreshUpstream(key)
+            : () => refreshPublicUpstream();
           inflight = refreshFn()
             .then(async (fresh) => {
               mem = fresh;
