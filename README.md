@@ -73,3 +73,9 @@ ARANYA includes an embedded **Event Simulator** with 4 pre-scripted scenarios:
 - **`src/data/aranyaLayers.js`**: High-performance Cesium vector entity generation and interaction handlers.
 - **`src/camera.js`**: Geographic presets (`india`, `uttarakhand`, `rajaji`, `corbett`, `raiwala`, `global`) and smooth flight animations.
 - **`src/ui/aranya/`**: Top Intelligence HUD, Left Navigation Sidebar, Right Context Intelligence Rail, and Event Simulator modal.
+
+---
+
+## Author & Case Study
+
+Developed by **Parth Khansali** ([@ParthKhansali](https://github.com/ParthKhansali)) · [ARANYA Case Study](https://www.parthkhansali.tech/projects/aranya/) · [Portfolio](https://www.parthkhansali.tech/)
